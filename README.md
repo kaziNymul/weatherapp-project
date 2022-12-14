@@ -169,7 +169,7 @@ A ansible playbook is created to install docker, build image and run containers 
 
 So to run the application, an user has to import and run below 2 scripts in his ubuntu system. 
  * install_ansible_ubuntu.sh
- * ansible-playbook Docker_Install_image_Build_container_run.yml
+ * Docker_Install_image_Build_container_run.yml
  
 and run 
  * ./install_ansible_ubuntu.sh
