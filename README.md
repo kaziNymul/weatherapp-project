@@ -1,91 +1,166 @@
-# Weatherapp
+#Weatherapp
 
-There was a beautiful idea of building an app that would show the upcoming weather. The developers wrote a nice backend and a frontend following the latest principles and - to be honest - bells and whistles. However, the developers did not remember to add any information about the infrastructure or even setup instructions in the source code.
+I tried to create the whole application in 2 ways. I used ubuntu as os functionality. 
 
-Luckily we now have [docker compose](https://docs.docker.com/compose/) saving us from installing the tools on our computer, and making sure the app looks (and is) the same in development and in production. All we need is someone to add the few missing files!
+ * Building the application locally
+ * Building the application in cloud  
+ 
+Two scripts should be executed by anyone who wishes to use the application on a local or cloud platform (One shell script and one ansible-playbook command). He needs to run the scripts in his local or cloud Ubuntu platforms.   
 
-## Prerequisites
+The whole task is divided into 4 parts.
 
-* An [openweathermap](http://openweathermap.org/) API key.
+## build docker image and run docker image under local host
 
-## Returning your solution
+The key challenge was to use containerization to link the frontend and backend code bases. In order to construct a docker image, I tried to make two build files (one for the frontend and another for the backend).
 
-### Via github
+ ### frontend image build
+ 
+Version conflicts were a difficulty I encountered when executing this build file. It's possible that the js version was out of sync with the system's other components. In order to make the current version compatible with the other entities, I defined an environment variable "openssl-legacy-provider" in the build file. The remaining settings are generally similar. Here is my frontend image buildfile. This Dockerfile should be kept under /frontend location.
+ 
+ FROM node:latest
 
-* Make a copy of this repository in your own github account (do not fork unless you really want to be public).
-* Create a personal repository in github.
-* Make changes, commit them, and push them in your own repository.
-* Send us the url where to find the code.
+ RUN mkdir -p /usr/src/app/frontend
+ WORKDIR /usr/src/app/frontend
+ 
+ ADD . /usr/src/app/frontend
+ RUN npm install
+ ENV NODE_OPTIONS=--openssl-legacy-provider
+ EXPOSE 8000
 
-### Via tar-package
+ CMD [ "npm", "run", "start" ]
+ 
+ ### backend image build
+ 
+Building the backend image went without any problems for me. The standard FROM, run, expose, CMD building. Below is the Dockerfile for the backend image. This Dockerfile should be kept under /backend location. 
+ 
+ FROM node:latest
 
-* Clone this repository.
-* Make changes and **commit them**.
-* Create a **.tgz** -package including the **.git**-directory, but excluding the **node_modules**-directories.
-* Send us the archive.
+ RUN mkdir -p /usr/src/app/backend
+ WORKDIR /usr/src/app/backend
+ 
+ ADD . /usr/src/app/backend
+ RUN npm install
+ 
+ EXPOSE 9000
+ 
+ CMD [ "npm", "run", "dev" ]
 
-## Exercises
+ 
+ ### docker compose to create image and run containers in one go 
+ 
+A compose is set up to run both containers and generate an image with a single command. Only the "docker compose up" command needs to be executed by the user in thesame directory as the docker-compose.yml file. This section contains the yml detail. For the purpose of keeping the backup in the volume even after the removal of the images, 2 persistent volumes are assigned for the images. The creation and containarization of the image will be quicker once any user choose to rebuild it. 
+ 
+ version: "2.2"
 
-Here are some things in different categories that you can do to make the app better. Before starting you need to get yourself an API key to make queries in the [openweathermap](http://openweathermap.org/). You can run the app locally using `npm i && npm start`.
+ services:
+   frontend:
+     ports:
+       - 8000:8000
+     build:
+       context: ./frontend
+     volumes:
+       - frontend-volume:/usr/src/app/frontend
+ 
+   backend:
+     ports:
+       - 9000:9000
+     build:
+       context: ./backend
+     volumes:
+       - backend-volume:/usr/src/app/backend
+ 
+ volumes:
+   frontend-volume:
+   backend-volume:
 
-### Docker
+## tag and push images in dockerhub
 
-*Docker containers are central to any modern development initiative. By knowing how to set up your application into containers and make them interact with each other, you have learned a highly useful skill.*
+In order for anyone who wants to run the application to be able to pull those images and execute them all at once, the frontend and backend images have been tagged and posted to a dockerhub repository. Here are the images:
 
-* Add **Dockerfile**'s in the *frontend* and the *backend* directories to run them virtually on any environment having [docker](https://www.docker.com/) installed. It should work by saying e.g. `docker build -t weatherapp_backend . && docker run --rm -i -p 9000:9000 --name weatherapp_backend -t weatherapp_backend`. If it doesn't, remember to check your api key first.
+ * mobikanu/weatherapp-backend
+ * mobikanu/weatherapp-frontend
 
-* Add a **docker-compose.yml** -file connecting the frontend and the backend, enabling running the app in a connected set of containers.
+## create an ec2 instance in aws
 
-* The developers are still keen to run the app and its pipeline on their own computers. Share the development files for the container by using volumes, and make sure the containers are started with a command enabling hot reload.
+ ### ec2 instance:
 
-### Node and React development
+An ec2 instance is launched with below configuration. 
+ 
+     launch formation 
+     AMI: ubuntu Server22.04 LTS(HVM), SSD volume type (freetier)
+          amd64 jammy image build on 2022-12-01
+     instance type: t2micro
+     storage: 8 gb root storage without any external ssd or hdd
+  
+ ### elastic ip:
 
-*Node and React applications are highly popular technologies. Understanding them will give you an advantage in front- and back-end development projects.*
+Elastic ip is configured to the instance so that public ip will not change after system reboot
+   
 
-* The application now only reports the current weather. It should probably report the forecast e.g. a few hours from now. (tip: [openweathermap api](https://openweathermap.org/forecast5))
+## install ansible in aws ec2 and create an ansible playbook to install and build, ship run container from docker hub
+    
+	### installing ansible
+	
+A shell script is created if anyone want to install ansible in local or cloud system. Below is the shell script detail. It is kept inside /Ansible. Script is "install_ansible_ubuntu.sh"
+    
+     *Update Repository
+    
+     sudo apt-get update
+     sudo apt-add-repository -y ppa:ansible/ansible
+     
+     *refresh the package
+     
+     sudo apt-get update
+     
+     *install Ansible
+     
+     sudo apt-get install -y ansible
+     
+     *install dependency python
+     
+     sudo apt install python-pip -y
+     
+     *check ansible version
+     
+     ansible --version
+	 
+	 ### ship and run container from dockerhub with a single ansible playbook
+	 
+A ansible playbook is created to install docker, build image and run containers of the whole application in a single go. It is kept inside /Ansible. User has to run "ansible-playbook Docker_Install_image_Build_container_run.yml". This playbook made use of previously generated and dockerhub pushed tagged images(mobikanu/weatherapp-frontend & backend mobikanu/weatherapp-backend).
+	 
+	 - hosts: localhost
+       become: true
+       
+       
+       tasks:
+       - name: install_docker
+         command: apt install docker.io -y
+       
+       - name: start_docker
+         command: systemctl enable --now docker
+       
+       - name: pull_image-weatherapp_frontend
+         command: docker pull mobikanu/weatherapp-frontend
+      
+       - name: pull_image-weatherapp_backend
+         command: docker pull mobikanu/weatherapp-backend
+       
+       - name: docker_container_run_weatherapp_frontend
+         command: docker container run -d -p 8000:8000 --name frontend mobikanu/weatherapp-frontend
+      
+       - name: docker_container_run_weatherapp_backend
+         command: docker container run -d -p 9000:9000 --name backend mobikanu/weatherapp-backend
+		 
 
-* There are [eslint](http://eslint.org/) errors. Sloppy coding it seems. Please help.
+So to run the application, an user has to import and run below 2 scripts in his ubuntu system. 
+ * install_ansible_ubuntu.sh
+ * ansible-playbook Docker_Install_image_Build_container_run.yml
+ 
+and run 
+ ./install_ansible_ubuntu.sh
+   ansible-playbook Docker_Install_image_Build_container_run.yml
+ 
 
-* The app currently reports the weather only for location defined in the *backend*. Shouldn't it check the browser location and use that as the reference for making a forecast? (tip: [geolocation](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation))
 
-### Testing
 
-*Test automation is key in developing good quality applications. Finding bugs in early stages of development is valuable in any software development project. With Robot Framework you can create integration tests that also serve as feature descriptions, making them exceptionally useful.*
-
-* Create automated tests for the application. (tip: [mocha](https://mochajs.org/))
-
-* Create [Robot Framework](http://robotframework.org/) integration tests. Hint: Start by creating a third container that gives expected weather data and direct the backend queries there by redefining the **MAP_ENDPOINT**.
-
-### Cloud
-
-*The biggest trend of recent times is developing, deploying and hosting your applications in cloud. Knowing cloud -related technologies is essential for modern IT specialists.*
-
-* Set up the weather service in a free cloud hosting service, e.g. [AWS](https://aws.amazon.com/free/) or [Google Cloud](https://cloud.google.com/free/).
-
-### Ansible
-
-*Automating deployment processes saves a lot of valuable time and reduces chances of costly errors. Infrastructure as Code removes manual steps and allows people to concentrate on core activities.*
-
-* Write [ansible](http://docs.ansible.com/ansible/intro.html) playbooks for installing [docker](https://www.docker.com/) and the app itself.
-
-### Documentation
-
-*Good documentation benefits everyone.*
-
-* Remember to update the README
-
-* Use descriptive names and add comments in the code when necessary
-
-### ProTips
-
-* When you are coding the application imagine that you are a freelancer developer developing an application for an important customer.
-
-* The app must be ready to deploy and work flawlessly.
-
-* The app must be easy to deploy to your local machine with and without Docker. 
-
-* Detailed instructions to run the app should be included in your forked version because a customer would expect detailed instructions also.
-
-* Structure the code and project folder structure in a modular and logical fashion for extra points.
-
-* Try to avoid any bugs or weirdness in the operating logic.
+ 

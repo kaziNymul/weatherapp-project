@@ -1,0 +1,22 @@
+- hosts: localhost
+  become: true
+  
+  
+  tasks:
+  - name: install_docker
+    command: apt install docker.io -y
+  
+  - name: start_docker
+    command: systemctl enable --now docker
+  
+  - name: pull_image-weatherapp_frontend
+    command: docker pull mobikanu/weatherapp-frontend
+
+  - name: pull_image-weatherapp_backend
+    command: docker pull mobikanu/weatherapp-backend
+  
+  - name: docker_container_run_weatherapp_frontend
+    command: docker container run -d -p 8000:8000 --name frontend mobikanu/weatherapp-frontend
+
+  - name: docker_container_run_weatherapp_backend
+    command: docker container run -d -p 9000:9000 --name backend mobikanu/weatherapp-backend
