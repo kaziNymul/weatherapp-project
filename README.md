@@ -118,28 +118,28 @@ Elastic ip is configured to the instance so that public ip will not change after
 	
 A shell script is created if anyone want to install ansible in local or cloud system. Below is the shell script detail. It is kept inside /Ansible. Script is "install_ansible_ubuntu.sh"
     
-     *Update Repository
+     * Update Repository
     
      sudo apt-get update
      sudo apt-add-repository -y ppa:ansible/ansible
      
-     *refresh the package
+     * refresh the package
      
      sudo apt-get update
      
-     *install Ansible
+     * install Ansible
      
      sudo apt-get install -y ansible
      
-     *install dependency python
+     * install dependency python
      
      sudo apt install python-pip -y
      
-     *check ansible version
+     * check ansible version
      
      ansible --version
 	 
-	 ### ship and run container from dockerhub with a single ansible playbook
+ ### ship and run container from dockerhub with a single ansible playbook
 	 
 A ansible playbook is created to install docker, build image and run containers of the whole application in a single go. It is kept inside /Ansible. User has to run "ansible-playbook Docker_Install_image_Build_container_run.yml". This playbook made use of previously generated and dockerhub pushed tagged images(mobikanu/weatherapp-frontend & backend mobikanu/weatherapp-backend).
 	 
@@ -172,8 +172,8 @@ So to run the application, an user has to import and run below 2 scripts in his 
  * ansible-playbook Docker_Install_image_Build_container_run.yml
  
 and run 
- ./install_ansible_ubuntu.sh
-   ansible-playbook Docker_Install_image_Build_container_run.yml
+ * ./install_ansible_ubuntu.sh
+ *  ansible-playbook Docker_Install_image_Build_container_run.yml
  
 
 
