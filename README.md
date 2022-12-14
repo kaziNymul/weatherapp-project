@@ -92,8 +92,8 @@ A compose is set up to run both containers and generate an image with a single c
 
 In order for anyone who wants to run the application to be able to pull those images and execute them all at once, the frontend and backend images have been tagged and posted to a dockerhub repository. Here are the images:
 
- * mobikanu/weatherapp-backend
- * mobikanu/weatherapp-frontend
+ * mobikanu/weatherapp-backend (https://hub.docker.com/repository/docker/mobikanu/weatherapp-backend)
+ * mobikanu/weatherapp-frontend (https://hub.docker.com/repository/docker/mobikanu/weatherapp-frontend)
 
 ## create an ec2 instance in aws
 
