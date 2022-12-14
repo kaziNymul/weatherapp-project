@@ -59,24 +59,32 @@ A compose is set up to run both containers and generate an image with a single c
  version: "2.2"
 
  services:
+ 
    frontend:
+   
      ports:
        - 8000:8000
+       
      build:
        context: ./frontend
+       
      volumes:
        - frontend-volume:/usr/src/app/frontend
  
    backend:
+   
      ports:
        - 9000:9000
+       
      build:
        context: ./backend
+       
      volumes:
        - backend-volume:/usr/src/app/backend
  
  volumes:
    frontend-volume:
+   
    backend-volume:
 
 ## tag and push images in dockerhub
