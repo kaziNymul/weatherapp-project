@@ -114,7 +114,7 @@ Elastic ip is configured to the instance so that public ip will not change after
 
 ## install ansible in aws ec2 and create an ansible playbook to install and build, ship run container from docker hub
     
-	### installing ansible
+###  installing ansible
 	
 A shell script is created if anyone want to install ansible in local or cloud system. Below is the shell script detail. It is kept inside /Ansible. Script is "install_ansible_ubuntu.sh"
     
