@@ -83,6 +83,7 @@ A compose is set up to run both containers and generate an image with a single c
        - backend-volume:/usr/src/app/backend
  
  volumes:
+ 
    frontend-volume:
    
    backend-volume:
