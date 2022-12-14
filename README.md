@@ -1,4 +1,4 @@
-#Weatherapp
+# Weatherapp
 
 I tried to create the whole application in 2 ways. I used ubuntu as os functionality. 
 
@@ -20,11 +20,15 @@ Version conflicts were a difficulty I encountered when executing this build file
  FROM node:latest
 
  RUN mkdir -p /usr/src/app/frontend
+ 
  WORKDIR /usr/src/app/frontend
  
  ADD . /usr/src/app/frontend
+ 
  RUN npm install
+ 
  ENV NODE_OPTIONS=--openssl-legacy-provider
+ 
  EXPOSE 8000
 
  CMD [ "npm", "run", "start" ]
@@ -36,9 +40,11 @@ Building the backend image went without any problems for me. The standard FROM, 
  FROM node:latest
 
  RUN mkdir -p /usr/src/app/backend
+ 
  WORKDIR /usr/src/app/backend
  
  ADD . /usr/src/app/backend
+ 
  RUN npm install
  
  EXPOSE 9000
